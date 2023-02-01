@@ -16,28 +16,68 @@
 
 import unittest
 import os
+import json
 from ocdm_graph import OCDMConjunctiveGraph, OCDMGraph
-from provenance import OCDMProvenance
+from prov.provenance import OCDMProvenance
 from rdflib import URIRef, Literal
+from prov.snapshot_entity import SnapshotEntity
 
 class TestOCDMProvenance(unittest.TestCase):
-    def test_generate_provenance(self):
-        graph = OCDMGraph()
-        graph.parse(os.path.join('test', 'br.nt'))
-        graph.preexisting_finished()
-        graph.remove((URIRef('https://w3id.org/oc/meta/br/0605'), URIRef('http://purl.org/dc/terms/title'), Literal('A Review Of Hemolytic Uremic Syndrome In Patients Treated With Gemcitabine Therapy')))
-        graph.add((URIRef('https://w3id.org/oc/meta/br/0605'), URIRef('http://purl.org/dc/terms/title'), Literal('Bella zì')))
-        ocdmprovenance = OCDMProvenance(graph)
-        ocdmprovenance.generate_provenance()
+    def setUp(self):
+        self.ocdm_graph = OCDMGraph()
+        self.ocdm_conjunctive_graph = OCDMConjunctiveGraph()
+        self.ocdm_prov_memory = OCDMProvenance(self.ocdm_graph)
+        self.ocdm_prov = OCDMProvenance(self.ocdm_conjunctive_graph, info_dir=os.path.join('test', 'info_dir'))
+        self.subject = 'https://w3id.org/oc/meta/br/0605'
 
-    def test_generate_provenance_graph(self):
-        graph = OCDMConjunctiveGraph()
-        graph.parse(os.path.join('test', 'br.nq'))
-        graph.preexisting_finished()
-        graph.remove((URIRef('https://w3id.org/oc/meta/br/0605'), URIRef('http://purl.org/dc/terms/title'), Literal('A Review Of Hemolytic Uremic Syndrome In Patients Treated With Gemcitabine Therapy')))
-        graph.add((URIRef('https://w3id.org/oc/meta/br/0605'), URIRef('http://purl.org/dc/terms/title'), Literal('Bella zì')))
-        ocdmprovenance = OCDMProvenance(graph)
-        ocdmprovenance.generate_provenance()
+    def test_add_se(self):
+        self.ocdm_graph.add((URIRef(self.subject), URIRef('http://purl.org/dc/terms/title'), Literal('Bella zì')))
+        se = self.ocdm_prov_memory.add_se(prov_subject=URIRef(self.subject))
+        self.assertIsNotNone(se)
+        self.assertIsInstance(se, SnapshotEntity)
+        self.assertEqual(str(se.res), 'https://w3id.org/oc/meta/br/0605/prov/se/1')
+
+    def test_generate_provenance(self):
+        cur_time = 1607375859.846196
+        cur_time_str = '2020-12-07T21:17:39+00:00'
+        with self.subTest('Creation -> No snapshot -> Modification. OCDMGraph. in-memory counter'):
+            self.ocdm_graph.parse(os.path.join('test', 'br.nt'))
+            self.ocdm_graph.preexisting_finished()
+            result = self.ocdm_prov_memory.generate_provenance(cur_time)
+            self.assertIsNone(result)
+            se_a: SnapshotEntity = self.ocdm_prov_memory.get_entity(f'{self.subject}/prov/se/1')
+            self.assertIsNotNone(se_a)
+            self.assertIsInstance(se_a, SnapshotEntity)
+            self.assertEqual(URIRef(self.subject), se_a.get_is_snapshot_of())
+            self.assertEqual(cur_time_str, se_a.get_generation_time())
+            self.assertEqual(f"The entity '{self.subject}' has been created.", se_a.get_description())
+            self.ocdm_prov_memory.generate_provenance(cur_time)
+            se_a_2: SnapshotEntity = self.ocdm_prov_memory.get_entity(f'{self.subject}/prov/se/2')
+            self.assertIsNone(se_a_2)
+            self.ocdm_graph.remove((URIRef(self.subject), URIRef('http://purl.org/dc/terms/title'), Literal('A Review Of Hemolytic Uremic Syndrome In Patients Treated With Gemcitabine Therapy')))
+            self.ocdm_graph.add((URIRef(self.subject), URIRef('http://purl.org/dc/terms/title'), Literal('Bella zì')))
+            self.ocdm_prov_memory.generate_provenance()
+            se_a_2: SnapshotEntity = self.ocdm_prov_memory.get_entity(f'{self.subject}/prov/se/2')
+            self.assertEqual(se_a_2.get_update_action(), 'DELETE DATA { <https://w3id.org/oc/meta/br/0605> <http://purl.org/dc/terms/title> "A Review Of Hemolytic Uremic Syndrome In Patients Treated With Gemcitabine Therapy" . }; INSERT DATA { <https://w3id.org/oc/meta/br/0605> <http://purl.org/dc/terms/title> "Bella zì" . }')
+            self.assertEqual(se_a_2.get_description(), f"The entity '{self.subject}' was modified.")
+            self.assertEqual(self.ocdm_prov_memory.counter_handler.prov_counters, {self.subject: 2, 'https://w3id.org/oc/meta/br/0636066666': 1})
+        with self.subTest('Creation. OCDMConjunctiveGraph. filesystem counter'):
+            self.ocdm_conjunctive_graph.parse(os.path.join('test', 'br.nq'))
+            self.ocdm_conjunctive_graph.preexisting_finished()
+            with open(os.path.join('test', 'info_dir', 'provenance_index.json'), 'w', encoding='utf8') as outfile:
+                json_object = json.dumps({self.subject: 1}, ensure_ascii=False, indent=None)
+                outfile.write(json_object)
+            self.ocdm_conjunctive_graph.remove((URIRef(self.subject), URIRef('http://purl.org/dc/terms/title'), Literal('A Review Of Hemolytic Uremic Syndrome In Patients Treated With Gemcitabine Therapy')))
+            self.ocdm_conjunctive_graph.add((URIRef(self.subject), URIRef('http://purl.org/dc/terms/title'), Literal('Bella zì')))
+            self.ocdm_prov.generate_provenance()
+            se_a_2: SnapshotEntity = self.ocdm_prov.get_entity(f'{self.subject}/prov/se/2')
+            self.assertEqual(se_a_2.get_description(), f"The entity '{self.subject}' was modified.")
+            self.assertEqual(se_a_2.get_is_snapshot_of(), URIRef(self.subject))
+            self.assertEqual(se_a_2.get_derives_from()[0].res, URIRef('https://w3id.org/oc/meta/br/0605/prov/se/1'))
+            self.assertEqual(se_a_2.get_update_action(), 'DELETE DATA { GRAPH <https://w3id.org/oc/meta/br/> { <https://w3id.org/oc/meta/br/0605> <http://purl.org/dc/terms/title> "A Review Of Hemolytic Uremic Syndrome In Patients Treated With Gemcitabine Therapy" . } }; INSERT DATA { GRAPH <https://w3id.org/oc/meta/br/> { <https://w3id.org/oc/meta/br/0605> <http://purl.org/dc/terms/title> "Bella zì" . } }')
+            with open(os.path.join('test', 'info_dir', 'provenance_index.json'), 'r', encoding='utf8') as outfile:
+                self.assertEqual(json.load(outfile), {'https://w3id.org/oc/meta/br/0605': 2, 'https://w3id.org/oc/meta/br/0636066666': 1})
+
 
 if __name__ == '__main__':
     unittest.main()

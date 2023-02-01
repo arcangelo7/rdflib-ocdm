@@ -13,30 +13,3 @@
 # DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
 # ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 # SOFTWARE.
-
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from rdflib import URIRef
-    from typing import Match
-
-import re
-
-prov_regex: str = r"^(.+)/prov/([a-z][a-z])/([1-9][0-9]*)$"
-
-def _get_match(regex: str, group: int, string: str) -> str:
-    match: Match = re.match(regex, string)
-    if match is not None:
-        return match.group(group)
-    else:
-        return ""
-
-def is_string_empty(string: str) -> bool:
-    return string is None or string.strip() == ""
-
-def get_prov_count(res: URIRef) -> str:
-    string_iri: str = str(res)
-    if "/prov/" in string_iri:
-        return _get_match(prov_regex, 3, string_iri)

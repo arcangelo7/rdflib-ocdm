@@ -8,8 +8,9 @@ readme = "README.md"
 packages = [{include = "rdflib_ocdm"}]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.7.4"
 rdflib = "^6.2.0"
+oc-ocdm = "^7.1.7"
 
 
 [build-system]
