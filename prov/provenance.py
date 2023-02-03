@@ -30,14 +30,17 @@ from rdflib import ConjunctiveGraph, Graph, URIRef
 from counter_handler.counter_handler import CounterHandler
 from counter_handler.filesystem_counter_handler import FilesystemCounterHandler
 from counter_handler.in_memory_counter_handler import InMemoryCounterHandler
+from counter_handler.sqlite_counter_handler import SqliteCounterHandler
 
 class OCDMProvenance(object):
-    def __init__(self, prov_subj_graph: OCDMConjunctiveGraph|OCDMGraph, info_dir: str = ""):
+    def __init__(self, prov_subj_graph: OCDMConjunctiveGraph|OCDMGraph, info_dir: str = "", database: str = ""):
         self.prov_g = prov_subj_graph
         # The following variable maps a URIRef with the related provenance entity
         self.res_to_entity: Dict[str, ProvEntity] = dict()
         if info_dir is not None and info_dir != "":
             self.counter_handler: CounterHandler = FilesystemCounterHandler(info_dir)
+        elif database is not None and database != "":
+            self.counter_handler: SqliteCounterHandler = SqliteCounterHandler(database)
         else:
             self.counter_handler: CounterHandler = InMemoryCounterHandler()
 

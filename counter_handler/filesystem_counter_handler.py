@@ -64,7 +64,12 @@ class FilesystemCounterHandler(CounterHandler):
         if new_value < 0:
             raise ValueError("new_value must be a non negative integer!")
         file_path: str = self._get_prov_path()
-        self._set_number(new_value, file_path, entity_name)
+        self.__initialize_file_if_not_existing(file_path, entity_name)
+        with open(file_path, 'r', encoding='utf8') as file:
+            data = json.load(file)
+        with open(file_path, 'w', encoding='utf8') as outfile:
+            data[entity_name] = new_value
+            outfile.write(data)
 
     def read_counter(self, entity_name: str) -> int:
         """
@@ -120,8 +125,3 @@ class FilesystemCounterHandler(CounterHandler):
             json_object = json.dumps(data, ensure_ascii=False, indent=None)
             outfile.write(json_object)
         return cur_number
-
-    def _set_number(self, new_value: int, file_path: str, entity_name: str) -> None:
-        if new_value < 0:
-            raise ValueError("new_value must be a non negative integer!")
-        self.__initialize_file_if_not_existing(file_path, entity_name)
