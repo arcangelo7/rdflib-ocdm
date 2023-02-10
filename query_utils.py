@@ -15,13 +15,17 @@
 # SOFTWARE.
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from typing import Tuple
     from rdflib import URIRef
     from rdflib.compare import IsomorphicGraph
+
 from rdflib import ConjunctiveGraph, Graph
-from rdflib.compare import to_isomorphic, graph_diff
+from rdflib.compare import graph_diff, to_isomorphic
+
 
 def get_delete_query(data: ConjunctiveGraph|Graph, graph_iri: URIRef = None) -> Tuple[str, int]:
     num_of_statements: int = len(data)

@@ -17,9 +17,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from oc_ocdm.decorators import accepts_only
 from rdflib import XSD
 
-from oc_ocdm.decorators import accepts_only
 from prov.prov_entity import ProvEntity
 
 if TYPE_CHECKING:

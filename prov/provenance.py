@@ -20,18 +20,21 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ocdm_graph import OCDMConjunctiveGraph, OCDMGraph
-    from typing import ClassVar, List, Dict, Optional, Tuple
-from prov.snapshot_entity import SnapshotEntity
-from prov.prov_entity import ProvEntity
+    from typing import List, Dict, Optional
+
+from collections import OrderedDict
 from datetime import datetime, timezone
-from query_utils import get_update_query
-from support import get_prov_count
+
 from rdflib import ConjunctiveGraph, Graph, URIRef
+
 from counter_handler.counter_handler import CounterHandler
 from counter_handler.filesystem_counter_handler import FilesystemCounterHandler
 from counter_handler.in_memory_counter_handler import InMemoryCounterHandler
 from counter_handler.sqlite_counter_handler import SqliteCounterHandler
-from collections import OrderedDict
+from prov.prov_entity import ProvEntity
+from prov.snapshot_entity import SnapshotEntity
+from query_utils import get_update_query
+from support import get_prov_count
 
 
 class OCDMProvenance(object):

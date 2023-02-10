@@ -14,13 +14,16 @@
 # ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 # SOFTWARE.
 
-import unittest
-import os
 import json
+import os
+import unittest
+
+from rdflib import Literal, URIRef
+
 from ocdm_graph import OCDMConjunctiveGraph, OCDMGraph
 from prov.provenance import OCDMProvenance
-from rdflib import URIRef, Literal
 from prov.snapshot_entity import SnapshotEntity
+
 
 class TestOCDMProvenance(unittest.TestCase):
     def setUp(self):

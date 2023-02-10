@@ -18,9 +18,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from rdflib import Namespace, URIRef, Graph
+from rdflib import Graph, Namespace, URIRef
+
 if TYPE_CHECKING:
     from prov.provenance import OCDMProvenance
+
 from abstract_entity import AbstractEntity
 
 if TYPE_CHECKING:

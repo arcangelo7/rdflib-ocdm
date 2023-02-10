@@ -15,24 +15,22 @@
 # SOFTWARE.
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from rdflib import URIRef
     from typing import List, Tuple, Optional
 
-from rdflib import ConjunctiveGraph, Graph
+from collections import OrderedDict
 from copy import deepcopy
-from counter_handler.counter_handler import CounterHandler
-from counter_handler.filesystem_counter_handler import FilesystemCounterHandler
-from counter_handler.in_memory_counter_handler import InMemoryCounterHandler
-from counter_handler.sqlite_counter_handler import SqliteCounterHandler
+from datetime import datetime, timezone
+
+from rdflib import ConjunctiveGraph, Graph
+
+from prov.prov_entity import ProvEntity
 from prov.provenance import OCDMProvenance
 from prov.snapshot_entity import SnapshotEntity
-from prov.prov_entity import ProvEntity
-from datetime import datetime, timezone
-from collections import OrderedDict
-
 
 
 class OCDMGraphCommons():

@@ -15,7 +15,9 @@
 # SOFTWARE.
 
 import sqlite3
-from counter_handler.counter_handler import CounterHandler 
+
+from counter_handler.counter_handler import CounterHandler
+
 
 class SqliteCounterHandler(CounterHandler):
     """A concrete implementation of the ``CounterHandler`` interface that persistently stores
