@@ -61,6 +61,7 @@ class FilesystemCounterHandler(CounterHandler):
         :raises ValueError: if ``new_value`` is a negative integer.
         :return: None
         """
+        entity_name = str(entity_name)
         if new_value < 0:
             raise ValueError("new_value must be a non negative integer!")
         file_path: str = self._get_prov_path()
@@ -79,6 +80,7 @@ class FilesystemCounterHandler(CounterHandler):
         :type entity_name: str
         :return: The requested counter value.
         """
+        entity_name = str(entity_name)
         file_path: str = self._get_prov_path()
         return self._read_number(file_path, entity_name)
 
@@ -90,6 +92,7 @@ class FilesystemCounterHandler(CounterHandler):
         :type entity_name: str
         :return: The newly-updated (already incremented) counter value.
         """
+        entity_name = str(entity_name)
         file_path: str = self._get_prov_path()
         return self._add_number(file_path, entity_name)
 
@@ -97,6 +100,7 @@ class FilesystemCounterHandler(CounterHandler):
         return os.path.join(self.info_dir, self.provenance_index_filename)
 
     def __initialize_file_if_not_existing(self, file_path: str, entity_name: str):
+        entity_name = str(entity_name)
         if not os.path.exists(os.path.dirname(file_path)):
             os.makedirs(os.path.dirname(file_path))
         if not os.path.isfile(file_path):

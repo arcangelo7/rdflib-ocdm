@@ -13,6 +13,7 @@
 # DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
 # ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 # SOFTWARE.
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -44,6 +45,7 @@ class InMemoryCounterHandler(CounterHandler):
         :raises ValueError: if ``new_value`` is a negative integer.
         :return: None
         """
+        entity_name = str(entity_name)
         if new_value < 0:
             raise ValueError("new_value must be a non negative integer!")
         self.prov_counters[entity_name] = new_value
@@ -56,6 +58,7 @@ class InMemoryCounterHandler(CounterHandler):
         :type entity_name: str
         :return: The requested counter value.
         """
+        entity_name = str(entity_name)
         if entity_name in self.prov_counters:
             return self.prov_counters[entity_name]
         else:
@@ -70,6 +73,7 @@ class InMemoryCounterHandler(CounterHandler):
         :type entity_name: str
         :return: The newly-updated (already incremented) counter value.
         """
+        entity_name = str(entity_name)
         if entity_name in self.prov_counters:
             self.prov_counters[entity_name] += 1
         else:

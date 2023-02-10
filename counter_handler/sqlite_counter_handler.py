@@ -46,6 +46,7 @@ class SqliteCounterHandler(CounterHandler):
         :raises ValueError: if ``new_value`` is a negative integer.
         :return: None
         """
+        entity_name = str(entity_name)
         if new_value < 0:
             raise ValueError("new_value must be a non negative integer!")
         self.cur.execute(f"INSERT OR REPLACE INTO info (entity, count) VALUES ('{entity_name}', {new_value})")
@@ -59,6 +60,7 @@ class SqliteCounterHandler(CounterHandler):
         :type entity_name: str
         :return: The requested counter value.
         """
+        entity_name = str(entity_name)
         result = self.cur.execute(f"SELECT count FROM info WHERE entity='{entity_name}'")
         rows = result.fetchall()
         if len(rows) == 1:
@@ -76,6 +78,7 @@ class SqliteCounterHandler(CounterHandler):
         :type entity_name: str
         :return: The newly-updated (already incremented) counter value.
         """
+        entity_name = str(entity_name)
         cur_count = self.read_counter(entity_name)
         count = cur_count + 1
         self.set_counter(count, entity_name)

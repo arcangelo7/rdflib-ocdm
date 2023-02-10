@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ocdm_graph import OCDMConjunctiveGraph, OCDMGraph
-    from typing import ClassVar, Dict, Optional, Tuple
+    from typing import ClassVar, List, Dict, Optional, Tuple
 from prov.snapshot_entity import SnapshotEntity
 from prov.prov_entity import ProvEntity
 from datetime import datetime, timezone
@@ -31,6 +31,8 @@ from counter_handler.counter_handler import CounterHandler
 from counter_handler.filesystem_counter_handler import FilesystemCounterHandler
 from counter_handler.in_memory_counter_handler import InMemoryCounterHandler
 from counter_handler.sqlite_counter_handler import SqliteCounterHandler
+from collections import OrderedDict
+
 
 class OCDMProvenance(object):
     def __init__(self, prov_subj_graph: OCDMConjunctiveGraph|OCDMGraph, info_dir: str = "", database: str = ""):
@@ -49,7 +51,9 @@ class OCDMProvenance(object):
             cur_time: str = datetime.now(tz=timezone.utc).replace(microsecond=0).isoformat(sep="T")
         else:
             cur_time: str = datetime.fromtimestamp(c_time, tz=timezone.utc).replace(microsecond=0).isoformat(sep="T")
-        for cur_subj in self.prov_g.subjects(unique=True):
+        merge_index = self.prov_g.merge_index
+        prov_g_subjects = OrderedDict(sorted(self.prov_g.entity_index.items(), key=lambda x: not x[1]['to_be_deleted'], reverse=True))
+        for cur_subj in prov_g_subjects:
             last_snapshot_res: Optional[URIRef] = self._retrieve_last_snapshot(str(cur_subj))
             if last_snapshot_res is None:
                 # CREATION SNAPSHOT
@@ -59,7 +63,9 @@ class OCDMProvenance(object):
                 update_query = get_update_query(
                     self._generate_subj_graph(self.prov_g.preexisting_graph, cur_subj), 
                     self._generate_subj_graph(self.prov_g, cur_subj))[0]
-                if update_query:
+                cur_subj_merge_index = {k: v for k, v in merge_index.items() if k == cur_subj}
+                snapshots_list = self._get_snapshots_from_merge_list(cur_subj_merge_index)
+                if update_query and len(snapshots_list) == 0:
                     # MODIFICATION SNAPSHOT
                     last_snapshot: SnapshotEntity = self.add_se(prov_subject=cur_subj, res=last_snapshot_res)
                     last_snapshot.has_invalidation_time(cur_time)
@@ -67,7 +73,31 @@ class OCDMProvenance(object):
                     cur_snapshot.derives_from(last_snapshot)
                     cur_snapshot.has_description(f"The entity '{str(cur_subj)}' was modified.")
                     cur_snapshot.has_update_action(update_query)
+                elif len(snapshots_list) > 0:
+                    # MERGE SNAPSHOT
+                    last_snapshot: SnapshotEntity = self.add_se(prov_subject=cur_subj, res=last_snapshot_res)
+                    last_snapshot.has_invalidation_time(cur_time)
+                    cur_snapshot: SnapshotEntity = self._create_snapshot(cur_subj, cur_time)
+                    cur_snapshot.derives_from(last_snapshot)
+                    for snapshot in snapshots_list:
+                        cur_snapshot.derives_from(snapshot)
+                    if update_query:
+                        cur_snapshot.has_update_action(update_query)
+                    cur_snapshot.has_description(self._get_merge_description(cur_subj, snapshots_list))
         self.prov_g.preexisting_finished()
+
+    @staticmethod
+    def _get_merge_description(cur_subj: URIRef, snapshots_list: List[SnapshotEntity]) -> str:
+        merge_description: str = f"The entity '{str(cur_subj)}' was merged"
+        is_first: bool = True
+        for snapshot in snapshots_list:
+            if is_first:
+                merge_description += f" with '{snapshot.prov_subject}'"
+                is_first = False
+            else:
+                merge_description += f", '{snapshot.prov_subject}'"
+        merge_description += "."
+        return merge_description
             
     def _retrieve_last_snapshot(self, prov_subject: URIRef) -> Optional[URIRef]:
         last_snapshot_count: str = str(self.counter_handler.read_counter(str(prov_subject)))
@@ -91,13 +121,21 @@ class OCDMProvenance(object):
         new_snapshot.is_snapshot_of(cur_subj)
         new_snapshot.has_generation_time(cur_time)
         return new_snapshot
+    
+    def _get_snapshots_from_merge_list(self, cur_subj_merge_index: dict) -> List[SnapshotEntity]:
+        snapshots_list: List[SnapshotEntity] = []
+        for _, merge_entities in cur_subj_merge_index.items():
+            for merge_entity in merge_entities:
+                last_entity_snapshot_res: Optional[URIRef] = self._retrieve_last_snapshot(merge_entity)
+                if last_entity_snapshot_res is not None:
+                    snapshots_list.append(self.add_se(prov_subject=merge_entity, res=last_entity_snapshot_res))
+        return snapshots_list
 
     def add_se(self, prov_subject: URIRef, res: URIRef = None) -> SnapshotEntity:
         if res is not None and res in self.res_to_entity:
             return self.res_to_entity[res]
         count = self._add_prov(str(prov_subject), res)
         se = SnapshotEntity(str(prov_subject), self, count)
-        self.res_to_entity[f'{str(prov_subject)}/prov/se/{count}'] = se
         return se
 
     def _add_prov(self, prov_subject: str, res: URIRef) -> Optional[str]:

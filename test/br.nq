@@ -23,3 +23,5 @@
 <https://w3id.org/oc/meta/br/0636066666> <http://purl.org/vocab/frbr/core#partOf> <https://w3id.org/oc/meta/br/0636067351> <https://w3id.org/oc/meta/br/> .
 <https://w3id.org/oc/meta/br/0636066666> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/spar/fabio/Expression> <https://w3id.org/oc/meta/br/> .
 <https://w3id.org/oc/meta/br/0636066666> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/spar/fabio/JournalArticle> <https://w3id.org/oc/meta/br/> .
+<https://w3id.org/oc/meta/id/0605> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/spar/datacite/Identifier> <https://w3id.org/oc/meta/id/> .
+<https://w3id.org/oc/meta/id/0636064270> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/spar/datacite/Identifier> <https://w3id.org/oc/meta/id/> .

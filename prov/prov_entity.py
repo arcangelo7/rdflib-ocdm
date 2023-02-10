@@ -55,6 +55,9 @@ class ProvEntity(AbstractEntity):
     def __init__(self, prov_subject: str, p_set: OCDMProvenance, count: str) -> None:
         super(ProvEntity, self).__init__()
         self.g: Graph = Graph()
+        self.prov_subject = prov_subject
         self.res = URIRef(prov_subject + '/prov/se/' + count)
         self.p_set: OCDMProvenance = p_set
         self._create_type(ProvEntity.iri_entity)
+        if str(self.res) not in p_set.res_to_entity:
+            p_set.res_to_entity[str(self.res)] = self
