@@ -87,7 +87,6 @@ class OCDMProvenance(object):
                     if update_query:
                         cur_snapshot.has_update_action(update_query)
                     cur_snapshot.has_description(self._get_merge_description(cur_subj, snapshots_list))
-        self.prov_g.preexisting_finished()
 
     @staticmethod
     def _get_merge_description(cur_subj: URIRef, snapshots_list: List[SnapshotEntity]) -> str:
@@ -123,6 +122,12 @@ class OCDMProvenance(object):
         new_snapshot: SnapshotEntity = self.add_se(prov_subject=cur_subj)
         new_snapshot.is_snapshot_of(cur_subj)
         new_snapshot.has_generation_time(cur_time)
+        source = self.prov_g.entity_index[cur_subj]['source']
+        resp_agent = self.prov_g.entity_index[cur_subj]['resp_agent']
+        if source is not None:
+            new_snapshot.has_primary_source(URIRef(source))
+        if resp_agent is not None:
+            new_snapshot.has_resp_agent(URIRef(resp_agent))
         return new_snapshot
     
     def _get_snapshots_from_merge_list(self, cur_subj_merge_index: dict) -> List[SnapshotEntity]:
