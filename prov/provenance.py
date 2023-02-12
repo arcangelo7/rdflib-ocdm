@@ -28,9 +28,7 @@ from datetime import datetime, timezone
 from rdflib import ConjunctiveGraph, Graph, URIRef
 
 from counter_handler.counter_handler import CounterHandler
-from counter_handler.filesystem_counter_handler import FilesystemCounterHandler
 from counter_handler.in_memory_counter_handler import InMemoryCounterHandler
-from counter_handler.sqlite_counter_handler import SqliteCounterHandler
 from prov.prov_entity import ProvEntity
 from prov.snapshot_entity import SnapshotEntity
 from query_utils import get_update_query
@@ -38,16 +36,13 @@ from support import get_prov_count
 
 
 class OCDMProvenance(object):
-    def __init__(self, prov_subj_graph: OCDMConjunctiveGraph|OCDMGraph, info_dir: str = "", database: str = ""):
+    def __init__(self, prov_subj_graph: OCDMConjunctiveGraph|OCDMGraph, counter_handler: CounterHandler = None):
         self.prov_g = prov_subj_graph
         # The following variable maps a URIRef with the related provenance entity
         self.res_to_entity: Dict[str, ProvEntity] = dict()
-        if info_dir is not None and info_dir != "":
-            self.counter_handler: CounterHandler = FilesystemCounterHandler(info_dir)
-        elif database is not None and database != "":
-            self.counter_handler: SqliteCounterHandler = SqliteCounterHandler(database)
-        else:
-            self.counter_handler: CounterHandler = InMemoryCounterHandler()
+        if counter_handler is None:
+            counter_handler = InMemoryCounterHandler()
+        self.counter_handler = counter_handler
 
     def generate_provenance(self, c_time: float = None) -> None:
         if c_time is None:

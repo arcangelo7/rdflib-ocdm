@@ -17,12 +17,6 @@ from __future__ import annotations
 
 import json
 import os
-from shutil import copymode, move
-from tempfile import mkstemp
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import BinaryIO, Tuple, List, Dict
 
 from counter_handler.counter_handler import CounterHandler
 from support import is_string_empty

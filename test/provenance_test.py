@@ -20,6 +20,8 @@ import unittest
 
 from rdflib import Literal, URIRef
 
+from counter_handler.filesystem_counter_handler import FilesystemCounterHandler
+from counter_handler.sqlite_counter_handler import SqliteCounterHandler
 from ocdm_graph import OCDMConjunctiveGraph, OCDMGraph
 from prov.provenance import OCDMProvenance
 from prov.snapshot_entity import SnapshotEntity
@@ -66,7 +68,8 @@ class TestOCDMProvenance(unittest.TestCase):
             self.assertEqual(se_a_2.get_description(), f"The entity '{self.subject}' was modified.")
             self.assertEqual(ocdm_graph.provenance.counter_handler.prov_counters, {self.subject: 2, 'https://w3id.org/oc/meta/br/0636066666': 1})
         with self.subTest('Modification. OCDMConjunctiveGraph. filesystem counter'):
-            ocdm_conjunctive_graph = OCDMConjunctiveGraph(info_dir=os.path.join('test', 'info_dir'))
+            counter_handler = FilesystemCounterHandler(os.path.join('test', 'info_dir'))
+            ocdm_conjunctive_graph = OCDMConjunctiveGraph(counter_handler=counter_handler)
             if os.path.exists(os.path.join('test', 'info_dir', 'provenance_index.json')):
                 os.remove(os.path.join('test', 'info_dir', 'provenance_index.json'))
             ocdm_conjunctive_graph.parse(os.path.join('test', 'br.nq'))
@@ -85,15 +88,15 @@ class TestOCDMProvenance(unittest.TestCase):
             with open(os.path.join('test', 'info_dir', 'provenance_index.json'), 'r', encoding='utf8') as outfile:
                 self.assertEqual(json.load(outfile), {'https://w3id.org/oc/meta/br/0605': 2, 'https://w3id.org/oc/meta/br/0636066666': 1, 'https://w3id.org/oc/meta/id/0636064270': 1, 'https://w3id.org/oc/meta/id/0605': 1})
         with self.subTest('Modification. OCDMConjunctiveGraph. database counter'):
-            ocdm_conjunctive_graph = OCDMConjunctiveGraph()
-            ocdm_prov_db = OCDMProvenance(ocdm_conjunctive_graph, database=os.path.join('test', 'database.db'))
+            counter_handler = SqliteCounterHandler(os.path.join('test', 'database.db'))
+            ocdm_conjunctive_graph = OCDMConjunctiveGraph(counter_handler=counter_handler)
             ocdm_conjunctive_graph.parse(os.path.join('test', 'br.nq'))
             ocdm_conjunctive_graph.preexisting_finished()
-            ocdm_prov_db.counter_handler.set_counter(1, self.subject)
+            ocdm_conjunctive_graph.provenance.counter_handler.set_counter(1, self.subject)
             ocdm_conjunctive_graph.remove((URIRef(self.subject), URIRef('http://purl.org/dc/terms/title'), Literal('A Review Of Hemolytic Uremic Syndrome In Patients Treated With Gemcitabine Therapy')))
             ocdm_conjunctive_graph.add((URIRef(self.subject), URIRef('http://purl.org/dc/terms/title'), Literal('Bella zì')))
-            ocdm_prov_db.generate_provenance()
-            se_a_2: SnapshotEntity = ocdm_prov_db.get_entity(f'{self.subject}/prov/se/2')
+            ocdm_conjunctive_graph.generate_provenance()
+            se_a_2: SnapshotEntity = ocdm_conjunctive_graph.get_entity(f'{self.subject}/prov/se/2')
             self.assertEqual(se_a_2.get_description(), f"The entity '{self.subject}' was modified.")
             self.assertEqual(se_a_2.get_is_snapshot_of(), URIRef(self.subject))
             self.assertEqual(se_a_2.get_derives_from()[0].res, URIRef('https://w3id.org/oc/meta/br/0605/prov/se/1'))

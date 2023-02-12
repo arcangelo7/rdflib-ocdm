@@ -22,22 +22,22 @@ if TYPE_CHECKING:
     from rdflib import URIRef
     from typing import List, Tuple, Optional
 
-from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timezone
 
 from rdflib import ConjunctiveGraph, Graph
 
+from counter_handler.counter_handler import CounterHandler
 from prov.prov_entity import ProvEntity
 from prov.provenance import OCDMProvenance
 from prov.snapshot_entity import SnapshotEntity
 
 
 class OCDMGraphCommons():
-    def __init__(self, info_dir: str = "", database: str = ""):
+    def __init__(self, counter_handler: CounterHandler):
         self.__merge_index = dict()
         self.__entity_index = dict()
-        self.provenance = OCDMProvenance(self, info_dir, database)
+        self.provenance = OCDMProvenance(self, counter_handler)
 
     def preexisting_finished(self: Graph|ConjunctiveGraph|OCDMGraphCommons, resp_agent: str = None, source: str = None, c_time: str = None):
         self.preexisting_graph = deepcopy(self)
@@ -84,11 +84,11 @@ class OCDMGraphCommons():
         self.preexisting_finished()
     
 class OCDMGraph(OCDMGraphCommons, Graph):
-    def __init__(self, info_dir: str = "", database: str = ""):
+    def __init__(self, counter_handler: CounterHandler = None):
         Graph.__init__(self)
-        OCDMGraphCommons.__init__(self, info_dir, database)
+        OCDMGraphCommons.__init__(self, counter_handler)
 
 class OCDMConjunctiveGraph(OCDMGraphCommons, ConjunctiveGraph):
-    def __init__(self, info_dir: str = "", database: str = ""):
+    def __init__(self, counter_handler: CounterHandler = None):
         ConjunctiveGraph.__init__(self)
-        OCDMGraphCommons.__init__(self, info_dir, database)
+        OCDMGraphCommons.__init__(self, counter_handler)
