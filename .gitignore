@@ -1,4 +1,6 @@
 .vscode
+test/info_dir
+test/database.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
